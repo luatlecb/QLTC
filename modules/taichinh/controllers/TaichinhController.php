@@ -1,14 +1,29 @@
 <?php
 
 namespace app\modules\taichinh\controllers;
-
 use app\modules\taichinh\models\taiChinh;
+use app\modules\taichinh\models\ThuNhapKhac;
+use app\modules\taichinh\models\ThunhapkhacSearch;
 use Yii;
+use app\modules\taichinh\models\taichinhSearch;
+use yii\web\Controller;
+use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
 
-class TaichinhController extends \yii\web\Controller
+class TaichinhController extends Controller
 {
+    public function behaviors()
+    {
+        return [
+            'verbs' => [
+                'class' => VerbFilter::className(),
+                'actions' => [
+                    'delete' => ['POST'],
+                ],
+            ],
+        ];
+    }
 
     public function actionIndex()
     {
@@ -22,6 +37,23 @@ class TaichinhController extends \yii\web\Controller
             }else{
                 return $this->render('index',['model'=>$detail]);
             }
+        }
+    }
+
+
+    protected function findModel($id)
+    {
+        if (($model = ThuNhapKhac::findOne($id)) !== null) {
+            return $model;
+        } else {
+            throw new NotFoundHttpException('The requested page does not exist.');
+        }
+    }
+
+    public function actionDelete(){
+        if(isset($_POST['id'])){
+            $this->findModel($_POST['id'])->delete();
+
         }
     }
     public function actionNguonthu(){
@@ -40,8 +72,24 @@ class TaichinhController extends \yii\web\Controller
 
     }
     public function actionNguonthukhac(){
-        return $this->render('nguon_thu_khac',['user_id'=>$this->getID()]);
+        $model=new ThuNhapKhac();
+        if(isset($_POST['name'])&&$_POST['name']!=''&&isset($_POST['total'])&&$_POST['total']!=''){
+            $total=$model->convertTotal($_POST['total']);
+            $model->name=$_POST['name'];
+            $model->total=$total;
+            $model->user_id=$this->getID();
+            $model->save();
+
+
+        }
+        $data = new ThunhapkhacSearch();
+        $data->user_id=$this->getID();
+        $data1=$data->search($data);
+        $data1->pagination->pageSize=10;
+        return $this->render('nguon_thu_khac',['model'=>$model,'data1'=>$data1]);
     }
+
+
 
 
 }
